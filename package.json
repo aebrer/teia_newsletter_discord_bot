@@ -1,0 +1,29 @@
+{
+  "name": "teia_newsletter_discord_bot",
+  "version": "1.0.0",
+  "description": "a discord notification bot for subscribing to Teia newsletters",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aebrer/teia_newsletter_discord_bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aebrer/teia_newsletter_discord_bot/issues"
+  },
+  "homepage": "https://github.com/aebrer/teia_newsletter_discord_bot#readme",
+  "dependencies": {
+    "discord.js": "^13.7.0",
+    "dotenv": "^16.0.1",
+    "mongoose": "^6.3.4",
+    "node-fetch": "^3.2.4",
+    "nodemon": "^2.0.16"
+  },
+  "type": "module"
+}

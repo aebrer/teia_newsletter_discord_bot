@@ -16,6 +16,11 @@ const notifierInfo = {
                     creator {
                         name
                     }
+                    token_tags {
+                        tag {
+                            tag
+                        }
+                    }
                 }
             }   
         `
@@ -32,6 +37,7 @@ const notifierInfo = {
                         supply
                         balance
                         createdAt
+                        tags
                     }
                 }
             }  

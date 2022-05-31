@@ -2,6 +2,8 @@ import DiscordJS, { Intents } from 'discord.js'
 
 // Create Commands
 export function InitCommands(commands){
+
+    // NotifyAdd
     commands?.create({
         name: "notifyadd",
         description: "Get notifications for new OBJKT/GENTK releases from a specified wallet address (optional tag filter)",
@@ -26,6 +28,7 @@ export function InitCommands(commands){
         ]
     })
 
+    // NotifyRemove
     commands?.create({
         name: "notifyremove",
         description: "Stop receiving notifications for specific releases",
@@ -46,6 +49,20 @@ export function InitCommands(commands){
                 name: "tag",
                 description: "The tag you'd like to be notified of",
                 type: DiscordJS.Constants.ApplicationCommandOptionTypes.STRING,
+            }
+        ]
+    })
+
+    // NotifyChannel
+    commands?.create({
+        name: "notifychannel",
+        description: "Set the notification channel",
+        options: [
+            {
+                name: "channel",
+                description: "The channel to output notifications to",
+                type: DiscordJS.Constants.ApplicationCommandOptionTypes.CHANNEL,
+                required: true,
             }
         ]
     })

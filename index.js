@@ -1,6 +1,6 @@
 import { NotifierCheck } from './notifier/notifier-checker.js'
-import { NotifierAdd } from './notifier/notifier.js'
 import { InitCommands } from './commands.js'
+import { CommandHandler } from './command-handler.js'
 import DiscordJS, { Intents } from 'discord.js'
 import dotenv from 'dotenv'
 import mongoose from 'mongoose'
@@ -29,8 +29,10 @@ client.on('ready', async () => {
         commands = client.application?.commands;
     }
 
+    // Initialize commands
     InitCommands(commands);
 
+    // Start checking for new pieces
     NotifierCheck();
 });
 
@@ -38,28 +40,8 @@ client.on('ready', async () => {
 client.on('interactionCreate', async (interaction) => {
     if(!interaction.isCommand()) return;
 
-    const {commandName, options, user} = interaction;
-
-    // NotifyAdd Command
-    if(commandName === "notifyadd"){
-        let _platform = options.getString("platform").toLowerCase();
-        let _address = options.getString("address");
-        let _tag = options.getString("tag");
-
-        let _reply = "`" + _platform + "` is not a valid platform. Accepted platforms are `teia` and `fxhash`."
-        
-        // If the platform is valid, add the notifier
-        if(_platform === "teia" || _platform === "fxhash"){
-            NotifierAdd(user.toString(), _platform, _address, _tag);
-            _reply = "You will be notified";
-        }
-
-        // Reply with a message only the person who typed the command can see
-        interaction.reply({
-            content: _reply,
-            ephemeral: true,
-        });
-    }
+    // Handle the command
+    await CommandHandler(interaction);
 });
 
 client.login(process.env.TOKEN)

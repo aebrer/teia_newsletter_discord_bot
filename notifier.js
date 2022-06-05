@@ -44,10 +44,16 @@ export async function NotifierCheck(){
                 let _tokenTeia = _responseTeia.data.hic_et_nunc_token[0];
                 var _timestampTeia = Date.parse(_tokenTeia.timestamp);
                 if(_timestampTeia > Date.parse(_current.structTeia.timestamp)){
-                    // TODO: NEW THING!! NOTIFY!!
+                    // NEW THING!! NOTIFY!!
                     console.log("new teia piece just dropped");
-                    let _name = _responseTeia.creator.name;
-                    let _objktId = _responseTeia.id;
+                    let _img = _tokenTeia.display_uri;
+                    _img = _img.replace("://", "/");
+                    _img = "https://ipfs.teia.rocks/" + _img;
+                    await NotifyDrop(_current.structTeia, "teia", "https://teia.art/objkt/", _tokenTeia.creator.name, _tokenTeia.id, _img);
+                    // Update the timestamp
+                    _current.structTeia.timestamp = new Date(Date.now()).toISOString();
+                    _current.markModified("structTeia")
+                    await _current.save();
                 }else{
                     console.log("nothing new");
                 }
@@ -64,7 +70,7 @@ export async function NotifierCheck(){
                 if(_timestampFxhash > Date.parse(_current.structFxhash.timestamp)){
                     // NEW THING!! NOTIFY!!
                     console.log("new fxhash piece just dropped");
-                    await NotifyFxhash(_current, _responseFxhash, _tokenFxhash);
+                    await NotifyDrop(_current.structFxhash, "fx(hash)", "https://www.fxhash.xyz/generative/", _responseFxhash.data.user.name, _tokenFxhash.id);
                     // Update the timestamp
                     _current.structFxhash.timestamp = new Date(Date.now()).toISOString();
                     _current.markModified("structFxhash")
@@ -177,14 +183,14 @@ export async function SetNotifierChannel(_guild, _channel){
     }
 }
 
-// FX(HASH) NOTIFICATION
-async function NotifyFxhash(_current, _responseFxhash, _tokenFxhash){
+// NOTIFICATION
+async function NotifyDrop(_struct, _platform, _platformUrl, _name, _objktId, _img = ""){
     let _servers = [];
     let _users = [];
 
     // Populate Channels and Users
-    for(var i=0; i<_current.structFxhash.users.length; i++){
-        let _userStruct = _current.structFxhash.users[i];
+    for(var i=0; i<_struct.users.length; i++){
+        let _userStruct = _struct.users[i];
         let _user = _userStruct.user;
         let _server = _userStruct.server;
         let _serverIndex = -1;
@@ -202,25 +208,23 @@ async function NotifyFxhash(_current, _responseFxhash, _tokenFxhash){
         }
     }
 
-    // Token Information
-    let _name = _responseFxhash.data.user.name;
-    let _objktId = _tokenFxhash.id;
-
     // Send all the messages to each channel
     for(var i=0; i<_servers.length; i++){
         let _serverDatas = await ServerList.find({id: _servers[i]})
         if(_serverDatas.length > 0){
             let _serverData = _serverDatas[0];
-            let _messageText = "A new fx(hash) piece from " + _name + " just dropped!\n";
-            _messageText += "https://www.fxhash.xyz/generative/" + _objktId + "\n";
+            let _messageText = "A new " + _platform + " piece from " + _name + " just dropped!\n";
+            if(_img === ""){
+                _messageText += _platformUrl + _objktId + "\n";
+            }else{
+                _messageText += "<" + _platformUrl + _objktId + ">\n";
+            }
             // Ping all the users
             for(var j=0; j<_users[i].length; j++){
                 _messageText += "<@" + _users[i][j] + "> "
             }
             let _channel = await client.channels.fetch(_serverData.channel);
-            _channel.send(_messageText);
+            _channel.send(_messageText)
         }
     }
-
-
 }

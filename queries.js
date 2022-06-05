@@ -21,6 +21,7 @@ const notifierInfo = {
                             tag
                         }
                     }
+                    display_uri
                 }
             }   
         `

@@ -6,7 +6,7 @@ export function InitCommands(commands){
     // NotifyAdd
     commands?.create({
         name: "notifyadd",
-        description: "Get notifications for new OBJKT/GENTK releases from a specified wallet address (optional tag filter)",
+        description: "Get notified of OBJKT/GENTK releases from a wallet address (optional tag filter)",
         options: [
             {
                 name: "platform",
@@ -24,6 +24,42 @@ export function InitCommands(commands){
                 name: "tag",
                 description: "The tag you'd like to be notified of",
                 type: DiscordJS.Constants.ApplicationCommandOptionTypes.STRING,
+            }
+        ]
+    })
+
+    // NotifyAdd
+    commands?.create({
+        name: "notifyaddrole",
+        description: "Get notified of OBJKT/GENTK releases from a wallet address to a specified role (optional tag filter)",
+        options: [
+            {
+                name: "role",
+                description: "The role you'd like to notify",
+                type: DiscordJS.Constants.ApplicationCommandOptionTypes.ROLE,
+                required: true,
+            },
+            {
+                name: "platform",
+                description: "`teia` or `fxhash`",
+                type: DiscordJS.Constants.ApplicationCommandOptionTypes.STRING,
+                required: true,
+            },
+            {
+                name: "address",
+                description: "The wallet address you'd like to fetch from",
+                type: DiscordJS.Constants.ApplicationCommandOptionTypes.STRING,
+                required: true,
+            },
+            {
+                name: "tag",
+                description: "The tag you'd like to be notified of",
+                type: DiscordJS.Constants.ApplicationCommandOptionTypes.STRING,
+            },
+            {
+                name: "channel",
+                description: "The channel to push notifications to",
+                type: DiscordJS.Constants.ApplicationCommandOptionTypes.CHANNEL
             }
         ]
     })

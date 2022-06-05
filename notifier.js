@@ -187,24 +187,31 @@ export async function SetNotifierChannel(_guild, _channel){
 async function NotifyDrop(_struct, _platform, _platformUrl, _name, _objktId, _img = ""){
     let _servers = [];
     let _users = [];
+    let _other = [];
 
     // Populate Channels and Users
     for(var i=0; i<_struct.users.length; i++){
         let _userStruct = _struct.users[i];
-        let _user = _userStruct.user;
-        let _server = _userStruct.server;
-        let _serverIndex = -1;
-        for(var j=0; j<_servers.length; j++){
-            if(_servers[j] === _server){
-                _serverIndex = i;
-                break;
-            }
-        }
-        if(_serverIndex == -1){
-            _servers.push(_server);
-            _users.push([_user]);
+        if(_userStruct.channel !== ""){
+            // If a channel is specified, process is separately
+            _other.push(_userStruct);
         }else{
-            _users[_serverIndex].push(_user);
+            // Otherwise, determine the users that are assigned to each server
+            let _server = _userStruct.server;
+            let _user = _userStruct.user;
+            let _serverIndex = -1;
+            for(var j=0; j<_servers.length; j++){
+                if(_servers[j] === _server){
+                    _serverIndex = i;
+                    break;
+                }
+            }
+            if(_serverIndex == -1){
+                _servers.push(_server);
+                _users.push([_user]);
+            }else{
+                _users[_serverIndex].push(__user);
+            }
         }
     }
 
@@ -212,19 +219,27 @@ async function NotifyDrop(_struct, _platform, _platformUrl, _name, _objktId, _im
     for(var i=0; i<_servers.length; i++){
         let _serverDatas = await ServerList.find({id: _servers[i]})
         if(_serverDatas.length > 0){
-            let _serverData = _serverDatas[0];
-            let _messageText = "A new " + _platform + " piece from " + _name + " just dropped!\n";
-            if(_img === ""){
-                _messageText += _platformUrl + _objktId + "\n";
-            }else{
-                _messageText += "<" + _platformUrl + _objktId + ">\n";
-            }
-            // Ping all the users
-            for(var j=0; j<_users[i].length; j++){
-                _messageText += "<@" + _users[i][j] + "> "
-            }
-            let _channel = await client.channels.fetch(_serverData.channel);
-            _channel.send(_messageText)
+            NotifyMessage(_serverDatas[0].channel, _users[i], _platform, _name, _platformUrl, _objktId, _img);
         }
     }
+
+    // Send messages to specified channels (typically these are role notifications)
+    for(var i=0; i<_other.length; i++){
+        NotifyMessage(_other[i].channel, [_other[i].user], _platform, _name, _platformUrl, _objktId, _img);
+    }
+}
+
+async function NotifyMessage(_channelId, _users, _platform, _name, _platformUrl, _objktId, _img){
+    let _messageText = "A new " + _platform + " piece from " + _name + " just dropped!\n";
+    if(_img === ""){
+        _messageText += _platformUrl + _objktId + "\n";
+    }else{
+        _messageText += "<" + _platformUrl + _objktId + ">\n";
+    }
+    // Ping all the users
+    for(var i=0; i<_users.length; i++){
+        _messageText += "<@" + _users[i] + "> "
+    }
+    let _channel = await client.channels.fetch(_channelId);
+    _channel.send(_messageText)
 }

@@ -91,6 +91,38 @@ export async function CommandHandler(interaction){
         });
     }
 
+    // NotifyRemoveRole
+    else if(commandName === "notifyremoverole"){
+        let _role = options.getRole("role");
+        let _platform = options.getString("platform").toLowerCase();
+        let _address = options.getString("address");
+        let _tag = options.getString("tag");
+
+        let _reply = "You can only perform this command if you are a server administrator."
+
+        if(interaction.channel.permissionsFor(interaction.user).has("ADMINISTRATOR") === true){
+            
+            if(_platform === "teia" || _platform === "fxhash"){
+                // If the platform is valid, add the notifier
+                var _user = {
+                    user: _role.toString(),
+                    server: guildId,
+                    channel: ""
+                };
+                _reply = await NotifierRemove(_user, _platform, _address, _tag);
+            }else{
+                // Otherwise, return error
+                _reply = "`" + _platform + "` is not a valid platform. Accepted platforms are `teia` and `fxhash`."
+            }
+        }
+
+        // Reply with a message only the person who typed the command can see
+        interaction.reply({
+            content: _reply,
+            ephemeral: true,
+        });
+    }
+
     // NotifyChannel
     else if(commandName === "notifychannel"){
         let _reply = "You can only perform this command if you are a server administrator."

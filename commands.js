@@ -77,13 +77,13 @@ export function InitCommands(commands){
             },
             {
                 name: "address",
-                description: "The wallet address you'd like to fetch from",
+                description: "The wallet address you'd like to stop fetching from",
                 type: DiscordJS.Constants.ApplicationCommandOptionTypes.STRING,
                 required: true,
             },
             {
                 name: "tag",
-                description: "The tag you'd like to be notified of",
+                description: "The tag you'd like to remove",
                 type: DiscordJS.Constants.ApplicationCommandOptionTypes.STRING,
             }
         ]

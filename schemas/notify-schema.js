@@ -6,14 +6,10 @@ const schema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    structTeia: {
+    struct: {
         type: Object,
         required: true
     },
-    structFxhash: {
-        type: Object,
-        required: true
-    }
 })
 
 export default schema;

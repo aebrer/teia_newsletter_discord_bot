@@ -23,11 +23,10 @@ client.on('ready', async () => {
     console.log("ready")
 
     const guildId = process.env.SERVER_ID.toString();
-
     const guild = client.guilds.cache.get(guildId);
-    let commands;
 
-    if(guild){
+    let commands;
+    if(guildId !== "" && guild){
         commands = guild.commands;
     }else{
         commands = client.application?.commands;

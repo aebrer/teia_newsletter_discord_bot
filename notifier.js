@@ -38,17 +38,16 @@ export async function NotifierCheck(){
         console.log("checking " + _current.address + ":")
 
         // TEIA
-        if(_current.structTeia.users.length > 0 || _current.structTeia.tags.length > 0){
+        if(_current.struct.teia.users.length > 0 || _current.struct.teia.tags.length > 0){
             console.log("checking: teia")
             let _responseTeia = await TeiaGraphQL(_current.address);
             if(_responseTeia){
                 let _tokenTeia = _responseTeia.data.hic_et_nunc_token[0];
                 var _timestampTeia = Date.parse(_tokenTeia.timestamp);
-                let _timestampNew = Date.parse(_current.structTeia.timestamp);
-                if(_timestampTeia > _timestampNew){
+                if(_timestampTeia > Date.parse(_current.struct.teia.timestamp)){
                     // NEW THING!! NOTIFY!!
                     console.log("new teia piece just dropped");
-                    await NotifyDrop(_current.structTeia, {
+                    await NotifyDrop(_current.struct.teia, {
                         platform: "teia",
                         platformUrl: "https://teia.art/objkt/",
                         id: _tokenTeia.id,
@@ -56,11 +55,11 @@ export async function NotifierCheck(){
                         artist: _tokenTeia.creator.name,
                         artistUrl: "https://teia.art/tz/" + _current.address,
                         thumbnail: "https://ipfs.teia.rocks/" + _tokenTeia.display_uri.replace("://", "/"),
-                        timestamp: _timestampNew
+                        timestamp: _timestampTeia
                     });
                     // Update the timestamp
-                    _current.structTeia.timestamp = new Date(Date.now()).toISOString();
-                    _current.markModified("structTeia")
+                    _current.struct.teia.timestamp = new Date(Date.now()).toISOString();
+                    _current.markModified("struct")
                     await _current.save();
                 }else{
                     console.log("nothing new");
@@ -69,17 +68,16 @@ export async function NotifierCheck(){
         }
 
         // FX HASH
-        if(_current.structFxhash.users.length > 0 || _current.structFxhash.tags.length > 0){
+        if(_current.struct.fxhash.users.length > 0 || _current.struct.fxhash.tags.length > 0){
             console.log("checking: fxhash")
             let _responseFxhash = await FxhashGraphQL(_current.address);
             if(_responseFxhash){
                 let _tokenFxhash = _responseFxhash.data.user.generativeTokens[0];
                 var _timestampFxhash = Date.parse(_tokenFxhash.createdAt);
-                let _timestampNew = Date.parse(_current.structFxhash.timestamp);
-                if(_timestampFxhash > _timestampNew){
+                if(_timestampFxhash > Date.parse(_current.struct.fxhash.timestamp)){
                     // NEW THING!! NOTIFY!!
                     console.log("new fxhash piece just dropped");
-                    await NotifyDrop(_current.structFxhash, {
+                    await NotifyDrop(_current.struct.fxhash, {
                         platform: "fx(hash)",
                         platformUrl: "https://www.fxhash.xyz/generative/",
                         id: _tokenFxhash.id,
@@ -87,11 +85,11 @@ export async function NotifierCheck(){
                         artist: _responseFxhash.data.user.name,
                         artistUrl: "https://www.fxhash.xyz/pkh/" + _current.address,
                         thumbnail: "https://gateway.fxhash2.xyz/" + _tokenFxhash.thumbnailUri.replace("://", "/"),
-                        timestamp: _timestampNew
+                        timestamp: _timestampFxhash
                     });
                     // Update the timestamp
-                    _current.structFxhash.timestamp = new Date(Date.now()).toISOString();
-                    _current.markModified("structFxhash")
+                    _current.struct.fxhash.timestamp = new Date(Date.now()).toISOString();
+                    _current.markModified("struct")
                     await _current.save();
                 }else{
                     console.log("nothing new");
@@ -108,6 +106,7 @@ export async function NotifierCheck(){
 
 // NotifyAdd Command
 export async function NotifierAdd(_user, _platform, _address, _tag = ""){
+    // TODO: Check if address is real
     let _hasAddress = false;
     notifierAddresses.forEach(_not => {
         if(_not.address === _address){
@@ -122,11 +121,10 @@ export async function NotifierAdd(_user, _platform, _address, _tag = ""){
         // If the address is already being tracked, update the existing entry
         let _notifier = await NotificationList.find({address: _address});
         console.log("adding: updating");
-        let _struct = _notifier[0].structTeia;
-        if(_platform === "fxhash") _struct = _notifier[0].structFxhash;
+        let _struct = _notifier[0].struct[_platform];
         let _hasUser = false;
         for(var i=0; i<_struct.users.length; i++){
-            if(_struct.users[i].user === _user.user.id) _hasUser = true;
+            if(_struct.users[i].user === _user.user.toString()) _hasUser = true;
         }
         if(_tag === null || _tag === ""){
             // If no tag, add user to the list if they weren't already there
@@ -162,11 +160,79 @@ export async function NotifierAdd(_user, _platform, _address, _tag = ""){
             }
         }
         // Update the entry in mongoose
-        if(_platform === "teia") _notifier[0].markModified("structTeia");
-        else _notifier[0].markModified("structFxhash");
+        _notifier[0].markModified("struct");
         await _notifier[0].save();
     }
     return "You will be notified!";
+}
+
+// NotifyRemove Command
+export async function NotifierRemove(_user, _platform, _address, _tag = ""){
+    let _hasAddress = false;
+    notifierAddresses.forEach(_not => {
+        if(_not.address === _address){
+            _hasAddress = true;
+        }
+    })
+    if(!_hasAddress){
+        // If the address isn't being tracked already, create a new one for the database
+        console.log("removing: can't remove nothing");
+        return "The address `" + _address + "` isn't being tracked currently, you can find out everything you're currently tracking by entering `/notifiers`"
+    }else{
+        // If the address is already being tracked, update the existing entry
+        let _notifiers = await NotificationList.find({address: _address});
+        let _notifier = _notifiers[0];
+        console.log("removing: updating");
+        let _struct = _notifier.struct[_platform];
+        let _hasUser = false;
+        for(var i=0; i<_struct.users.length; i++){
+            if(_struct.users[i].user === _user.user.toString()) _hasUser = true;
+        }
+        if(_tag === null || _tag === ""){
+            // TODO: If has tags but doesn't have user, remove all tags?
+            if(!_hasUser){
+                // If the user doesn't exist in the database, tell them they have nothing to delete
+                return "You aren't tracking " + _platform + " pieces from `" + _address + "` currently.";
+            }else{
+                // Otherwise, remove the user from the database
+                _notifier.struct[_platform].users = _struct.users.filter(e => e.user !== _user.user);
+                console.log(_notifier);
+            }
+        }else{
+            // if(!_hasUser) return "You are already tracking " + _platform + " pieces from `" + _address + "`. You'll have to use `/notifyremove` in order to track individual tags again."
+            // If a tag is specified, check to see if it's already being tracked
+            var _tagIndex = -1;
+            for(var i=0; i<_struct.tags.length; i++){
+                if(_struct.tags[i].tag === _tag){
+                    _tagIndex = i;
+                    break;
+                }
+            }
+
+            if(_tagIndex > -1){
+                // If the tag's being tracked, check to see if the user is already tracking it
+                let _hasUser = false;
+                for(var i=0; i<_struct.tags[_tagIndex].users.length; i++){
+                    if(_struct.tags[_tagIndex].users[i].user === _user.user) _hasUser = true;
+                }
+                // Add if the user isn't already there
+                if(!_hasUser){
+                    // If the user doesn't exist in the database, return error message
+                    return "You aren't tracking " + _platform + " pieces with the tag `" + _tag + "` from `" + _address + "` currently.";
+                }else{
+                    // Otherwise remove entry from database
+                    _struct.tags[_tagIndex].users.filter(e => e.user !== _user.user);
+                }
+            }else{
+                // If the tag isn't being tracked, return error message
+                return "Pieces from `" + _address + "` on " + _platform + " with the tag of `" + _tag + "` aren't being tracked currently."
+            }
+        }
+        // Update the entry in mongoose
+        _notifier.markModified("struct");
+        await _notifier.save();
+    }
+    return "You will no longer be notified!";
 }
 
 // First-time Notifier Creation
@@ -174,20 +240,18 @@ export async function NotifierCreate(_user, _platform, _address, _tag = null){
     let _timestamp = new Date(Date.now()).toISOString();
     let _structTeia = { timestamp: _timestamp, users: [], tags: [] };
     let _structFxhash = { timestamp: _timestamp, users: [], tags: [] };
-    let _struct = _structTeia;
-    if(_platform === "fxhash") _struct = _structFxhash;
+    let _struct = {"teia": _structTeia, "fxhash": _structFxhash};
     if(_tag === null || _tag === ""){
-        _struct.users.push(_user);
+        _struct[_platform].users.push(_user);
     }else{
-        _struct.tags.push({
+        _struct[_platform].tags.push({
             tag: _tag,
             users: [_user]
         });
     }
     const _notifier = new NotificationList({
         address: _address,
-        structTeia: _structTeia,
-        structFxhash: _structFxhash,
+        struct: _struct,
     })
     await _notifier.save();
 }

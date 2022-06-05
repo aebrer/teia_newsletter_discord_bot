@@ -39,6 +39,7 @@ const notifierInfo = {
                         balance
                         createdAt
                         tags
+                        thumbnailUri
                     }
                 }
             }  

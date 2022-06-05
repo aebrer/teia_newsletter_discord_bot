@@ -14,7 +14,7 @@ export async function CommandHandler(interaction){
         // If the platform is valid, add the notifier
         if(_platform === "teia" || _platform === "fxhash"){
             var _user = {
-                user: user,
+                user: user.toString(),
                 server: guildId,
                 channel: ""
             };
@@ -48,7 +48,7 @@ export async function CommandHandler(interaction){
             }else if(_platform === "teia" || _platform === "fxhash"){
                 // If the platform is valid, add the notifier
                 var _user = {
-                    user: _role.id,
+                    user: _role.toString(),
                     server: guildId,
                     channel: _channel
                 };

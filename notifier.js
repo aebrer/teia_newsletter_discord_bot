@@ -1,6 +1,7 @@
 import mongoose from 'mongoose'
 import { client } from './index.js';
 import { TeiaGraphQL, FxhashGraphQL } from './queries.js';
+import { MessageEmbed } from 'discord.js';
 
 import notifySchema from "./schemas/notify-schema.js"
 import serverSchema from "./schemas/server-schema.js"
@@ -43,13 +44,20 @@ export async function NotifierCheck(){
             if(_responseTeia){
                 let _tokenTeia = _responseTeia.data.hic_et_nunc_token[0];
                 var _timestampTeia = Date.parse(_tokenTeia.timestamp);
-                if(_timestampTeia > Date.parse(_current.structTeia.timestamp)){
+                let _timestampNew = Date.parse(_current.structTeia.timestamp);
+                if(_timestampTeia > _timestampNew){
                     // NEW THING!! NOTIFY!!
                     console.log("new teia piece just dropped");
-                    let _img = _tokenTeia.display_uri;
-                    _img = _img.replace("://", "/");
-                    _img = "https://ipfs.teia.rocks/" + _img;
-                    await NotifyDrop(_current.structTeia, "teia", "https://teia.art/objkt/", _tokenTeia.creator.name, _tokenTeia.id, _img);
+                    await NotifyDrop(_current.structTeia, {
+                        platform: "teia",
+                        platformUrl: "https://teia.art/objkt/",
+                        id: _tokenTeia.id,
+                        name: _tokenTeia.title,
+                        artist: _tokenTeia.creator.name,
+                        artistUrl: "https://teia.art/tz/" + _current.address,
+                        thumbnail: "https://ipfs.teia.rocks/" + _tokenTeia.display_uri.replace("://", "/"),
+                        timestamp: _timestampNew
+                    });
                     // Update the timestamp
                     _current.structTeia.timestamp = new Date(Date.now()).toISOString();
                     _current.markModified("structTeia")
@@ -67,10 +75,20 @@ export async function NotifierCheck(){
             if(_responseFxhash){
                 let _tokenFxhash = _responseFxhash.data.user.generativeTokens[0];
                 var _timestampFxhash = Date.parse(_tokenFxhash.createdAt);
-                if(_timestampFxhash > Date.parse(_current.structFxhash.timestamp)){
+                let _timestampNew = Date.parse(_current.structFxhash.timestamp);
+                if(_timestampFxhash > _timestampNew){
                     // NEW THING!! NOTIFY!!
                     console.log("new fxhash piece just dropped");
-                    await NotifyDrop(_current.structFxhash, "fx(hash)", "https://www.fxhash.xyz/generative/", _responseFxhash.data.user.name, _tokenFxhash.id);
+                    await NotifyDrop(_current.structFxhash, {
+                        platform: "fx(hash)",
+                        platformUrl: "https://www.fxhash.xyz/generative/",
+                        id: _tokenFxhash.id,
+                        name: _tokenFxhash.name,
+                        artist: _responseFxhash.data.user.name,
+                        artistUrl: "https://www.fxhash.xyz/pkh/" + _current.address,
+                        thumbnail: "https://gateway.fxhash2.xyz/" + _tokenFxhash.thumbnailUri.replace("://", "/"),
+                        timestamp: _timestampNew
+                    });
                     // Update the timestamp
                     _current.structFxhash.timestamp = new Date(Date.now()).toISOString();
                     _current.markModified("structFxhash")
@@ -184,7 +202,7 @@ export async function SetNotifierChannel(_guild, _channel){
 }
 
 // NOTIFICATION
-async function NotifyDrop(_struct, _platform, _platformUrl, _name, _objktId, _img = ""){
+async function NotifyDrop(_struct, _drop){
     let _servers = [];
     let _users = [];
     let _other = [];
@@ -219,26 +237,47 @@ async function NotifyDrop(_struct, _platform, _platformUrl, _name, _objktId, _im
     for(var i=0; i<_servers.length; i++){
         let _serverDatas = await ServerList.find({id: _servers[i]})
         if(_serverDatas.length > 0){
-            NotifyMessage(_serverDatas[0].channel, _users[i], _platform, _name, _platformUrl, _objktId, _img);
+            NotifyMessage(_serverDatas[0].channel, _users[i], _drop);
         }
     }
 
     // Send messages to specified channels (typically these are role notifications)
     for(var i=0; i<_other.length; i++){
-        NotifyMessage(_other[i].channel, [_other[i].user], _platform, _name, _platformUrl, _objktId, _img);
+        NotifyMessage(_other[i].channel, [_other[i].user], _drop);
     }
 }
 
-async function NotifyMessage(_channelId, _users, _platform, _name, _platformUrl, _objktId, _img){
-    let _messageText = "A new " + _platform + " piece from " + _name + " just dropped!\n";
-    if(_img === ""){
-        _messageText += _platformUrl + _objktId + "\n";
+async function NotifyMessage(_channelId, _users, _drop){
+
+    let _embed = new MessageEmbed()
+        .setTitle(_drop.name)
+        .setURL(_drop.platformUrl + _drop.platform)
+        .setAuthor({ name: _drop.artist, url: _drop.artistUrl})
+        .setImage(_drop.thumbnail)
+        .setTimestamp(_drop.timestamp)
+
+    let _messageText = "A new " + _drop.platform + " piece from " + _drop.artist + " just dropped!\n";
+    // Ping all the users
+    for(var i=0; i<_users.length; i++){
+        _messageText += _users[i];
+    }
+    let _channel = await client.channels.fetch(_channelId);
+    _channel.send({
+        content: _messageText,
+        embeds: [_embed]
+    })
+}
+
+async function NotifyMessageOld(_channelId, _users, _drop){
+    let _messageText = "A new " + _drop.platform + " piece from " + _drop.artist + " just dropped!\n";
+    if(_drop.img !== ""){
+        _messageText += _drop.platformUrl + _drop.id + "\n";
     }else{
-        _messageText += "<" + _platformUrl + _objktId + ">\n";
+        _messageText += "<" + _drop.platformUrl + _drop.id + ">\n";
     }
     // Ping all the users
     for(var i=0; i<_users.length; i++){
-        _messageText += "<@" + _users[i] + "> "
+        _messageText += _users[i];
     }
     let _channel = await client.channels.fetch(_channelId);
     _channel.send(_messageText)

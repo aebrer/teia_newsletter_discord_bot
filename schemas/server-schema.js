@@ -1,7 +1,12 @@
 import mongoose from 'mongoose'
 
 const schema = new mongoose.Schema({
-    list: {
+    id: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    channel: {
         type: String,
         required: true
     }

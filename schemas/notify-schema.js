@@ -3,14 +3,15 @@ import mongoose from 'mongoose'
 const schema = new mongoose.Schema({
     address: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     structTeia: {
-        type: String,
+        type: Object,
         required: true
     },
     structFxhash: {
-        type: String,
+        type: Object,
         required: true
     }
 })

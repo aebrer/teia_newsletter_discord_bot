@@ -1,7 +1,7 @@
-import { NotifierAdd } from './notifier/notifier.js'
+import { NotifierAdd, SetNotifierChannel } from './notifier.js'
 
 export async function CommandHandler(interaction){
-    const {commandName, options, user} = interaction;
+    const {guildId, commandName, options, user} = interaction;
 
     // NotifyAdd
     if(commandName === "notifyadd"){
@@ -13,8 +13,11 @@ export async function CommandHandler(interaction){
         
         // If the platform is valid, add the notifier
         if(_platform === "teia" || _platform === "fxhash"){
-            NotifierAdd(user.toString(), _platform, _address, _tag);
-            _reply = "You will be notified";
+            var _user = {
+                user: user,
+                server: guildId
+            };
+            _reply = await NotifierAdd(_user, _platform, _address, _tag);
         }
 
         // Reply with a message only the person who typed the command can see
@@ -26,8 +29,14 @@ export async function CommandHandler(interaction){
 
     // NotifyChannel
     if(commandName === "notifychannel"){
-        
         let _reply = "You can only perform this command if you are a server administrator."
+
+        if(interaction.channel.permissionsFor(interaction.user).has("ADMINISTRATOR") === true){
+            let _channel = options.getChannel("channel")
+
+            await SetNotifierChannel(interaction.guild, _channel);
+            _reply = "The channel has been successfully set to `#" + _channel.name + "`"
+        }
 
         // Reply with a message only the person who typed the command can see
         interaction.reply({

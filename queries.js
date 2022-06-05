@@ -57,6 +57,8 @@ export async function TeiaGraphQL(_address){
         }
     );
 
+    if(!_result.ok) return false;
+
     return await _result.json();
 }
 
@@ -75,6 +77,8 @@ export async function FxhashGraphQL(_address){
             })
         }
     );
+    
+    if(!_result.ok) return false;
 
     return await _result.json();
 }

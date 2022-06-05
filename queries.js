@@ -84,3 +84,9 @@ export async function FxhashGraphQL(_address){
 
     return await _result.json();
 }
+
+export async function TZKTAccount(_address){
+    const _result = await fetch("https://api.tzkt.io/v1/accounts/" + _address);
+
+    return await _result.json();
+}

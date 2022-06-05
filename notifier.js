@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
 import { client } from './index.js';
-import { TeiaGraphQL, FxhashGraphQL } from './queries.js';
+import { TeiaGraphQL, FxhashGraphQL, TZKTAccount } from './queries.js';
 import { MessageEmbed } from 'discord.js';
 
 import notifySchema from "./schemas/notify-schema.js"
@@ -20,7 +20,7 @@ async function NotifierPopulate(){
     _notifiers.forEach(_notifier => {
         notifierAddresses.push(_notifier);
     })
-    console.log(notifierAddresses)
+    //console.log(notifierAddresses)
 }
 
 export async function NotifierCheck(){
@@ -107,7 +107,12 @@ export async function NotifierCheck(){
 
 // NotifyAdd Command
 export async function NotifierAdd(_user, _platform, _address, _tag = ""){
-    // TODO: Check if address is real
+    // Check if the address is real
+    var _verifyAddress = await TZKTAccount(_address);
+    if(_verifyAddress.errors){
+        return "Please enter a valid tezos address.";
+    }
+    
     let _hasAddress = false;
     notifierAddresses.forEach(_not => {
         if(_not.address === _address){

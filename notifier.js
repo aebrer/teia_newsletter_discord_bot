@@ -11,7 +11,7 @@ const NotificationList = mongoose.model("notification", notifySchema)
 
 // Initialize Checker Variables
 var notifierAddresses = [];
-var notifierIndex = 0;
+var notifierIndex = -1;
 
 async function NotifierPopulate(){
     notifierAddresses = [];
@@ -26,8 +26,9 @@ async function NotifierPopulate(){
 export async function NotifierCheck(){
     
     // If there are no addresses populated (most likely when the bot is just launched)
-    if(notifierAddresses.length === 0){
+    if(notifierIndex === -1 || notifierIndex >= notifierAddresses.length){
         await NotifierPopulate();
+        notifierIndex = 0;
     // If addresses are populated
     }else{
         // Make sure address index is within bounds
@@ -119,20 +120,25 @@ export async function NotifierAdd(_user, _platform, _address, _tag = ""){
         await NotifierCreate(_user, _platform, _address, _tag);
     }else{
         // If the address is already being tracked, update the existing entry
-        let _notifier = await NotificationList.find({address: _address});
+        let _notifiers = await NotificationList.find({address: _address});
+        let _notifier = _notifiers[0];
         console.log("adding: updating");
-        let _struct = _notifier[0].struct[_platform];
-        let _hasUser = false;
+        let _struct = _notifier.struct[_platform];
+        let _userIndex = -1;
         for(var i=0; i<_struct.users.length; i++){
-            if(_struct.users[i].user === _user.user.toString()) _hasUser = true;
+            if(_struct.users[i].user === _user.user.toString()) _userIndex = i;
         }
         if(_tag === null || _tag === ""){
+            // If you are subscribed to tags, remove all subscribed tags
+            _struct.tags.forEach(_tagStruct => {
+                _tagStruct.users = _tagStruct.users.filter(e => e.user !== _user.user.toString());
+            });
+
             // If no tag, add user to the list if they weren't already there
-            // TODO: If you are subscribed to tags, remove all subscribed tags
-            if(!_hasUser) _struct.users.push(_user);
+            if(_userIndex === -1) _struct.users.push(_user);
             else return "You are already tracking " + _platform + " pieces from `" + _address + "`";
         }else{
-            if(_hasUser) return "You are already tracking " + _platform + " pieces from `" + _address + "`. You'll have to use `/notifyremove` in order to track individual tags again."
+            if(_userIndex > -1) return "You are already tracking " + _platform + " pieces from `" + _address + "`. You'll have to use `/notifyremove` in order to track individual tags again."
             // If a tag is specified, check to see if it's already being tracked
             var _tagIndex = -1;
             for(var i=0; i<_struct.tags.length; i++){
@@ -160,8 +166,9 @@ export async function NotifierAdd(_user, _platform, _address, _tag = ""){
             }
         }
         // Update the entry in mongoose
-        _notifier[0].markModified("struct");
-        await _notifier[0].save();
+        if(_userIndex > -1) notifierAddresses[_userIndex] = _notifier;
+        _notifier.markModified("struct");
+        await _notifier.save();
     }
     return "You will be notified!";
 }
@@ -184,13 +191,13 @@ export async function NotifierRemove(_user, _platform, _address, _tag = ""){
         let _notifier = _notifiers[0];
         console.log("removing: updating");
         let _struct = _notifier.struct[_platform];
-        let _hasUser = false;
+        let _userIndex = -1;
         for(var i=0; i<_struct.users.length; i++){
-            if(_struct.users[i].user === _user.user.toString()) _hasUser = true;
+            if(_struct.users[i].user === _user.user.toString()) _userIndex = i;
         }
         if(_tag === null || _tag === ""){
             // TODO: If has tags but doesn't have user, remove all tags?
-            if(!_hasUser){
+            if(_userIndex === -1){
                 // If the user doesn't exist in the database, tell them they have nothing to delete
                 return "You aren't tracking " + _platform + " pieces from `" + _address + "` currently.";
             }else{
@@ -199,7 +206,7 @@ export async function NotifierRemove(_user, _platform, _address, _tag = ""){
                 console.log(_notifier);
             }
         }else{
-            // if(!_hasUser) return "You are already tracking " + _platform + " pieces from `" + _address + "`. You'll have to use `/notifyremove` in order to track individual tags again."
+            // if(_userIndex === -1) return "You are already tracking " + _platform + " pieces from `" + _address + "`. You'll have to use `/notifyremove` in order to track individual tags again."
             // If a tag is specified, check to see if it's already being tracked
             var _tagIndex = -1;
             for(var i=0; i<_struct.tags.length; i++){
@@ -229,6 +236,7 @@ export async function NotifierRemove(_user, _platform, _address, _tag = ""){
             }
         }
         // Update the entry in mongoose
+        if(_userIndex > -1) notifierAddresses[_userIndex] = _notifier;
         _notifier.markModified("struct");
         await _notifier.save();
     }
@@ -258,6 +266,7 @@ export async function NotifierCreate(_user, _platform, _address, _tag = null){
 }
 
 export function Notifiers(_user){
+    console.log(notifierAddresses);
     let _txt = "";
     // Loop through all tracked addresses
     notifierAddresses.forEach(_notifier => {
@@ -278,15 +287,17 @@ export function Notifiers(_user){
             });
 
             // If not tracking, loop through all tags
-            if(!_tracking){
+            if(!_tracking && _struct.tags.length > 0){
                 _struct.tags.forEach(_tag => {
                     // Loop through all people tracking the current tag
-                    _tag.users.forEach(e => {
-                        if(_user === e.user){
-                            _tags.push(_tag.tag);
-                            _tracking = true;
-                        }
-                    })
+                    if(_tag.users.length > 0){
+                        _tag.users.forEach(e => {
+                            if(_user === e.user){
+                                _tags.push(_tag.tag);
+                                _tracking = true;
+                            }
+                        })
+                    }
                 })
             }
 

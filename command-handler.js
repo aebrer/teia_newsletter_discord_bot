@@ -1,4 +1,4 @@
-import { NotifierAdd, NotifierRemove, SetNotifierChannel } from './notifier.js'
+import { NotifierAdd, NotifierRemove, Notifiers, SetNotifierChannel } from './notifier.js'
 
 export async function CommandHandler(interaction){
     const {guildId, commandName, options, user} = interaction;
@@ -121,6 +121,17 @@ export async function CommandHandler(interaction){
             content: _reply,
             ephemeral: true,
         });
+    }
+
+    /// Notifiers
+    else if(commandName === "notifiers"){
+        let _reply = Notifiers(user.toString());
+
+        // Reply with a message only the person who typed the command can see
+        interaction.reply({
+            content: _reply,
+            ephemeral: true,
+        })
     }
 
     // NotifyChannel

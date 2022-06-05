@@ -120,6 +120,12 @@ export function InitCommands(commands){
         ]
     })
 
+    // Notifiers
+    commands?.create({
+        name: "notifiers",
+        description: "Get a list of all notifications you're currently subscribed to"
+    })
+
     // NotifyChannel
     commands?.create({
         name: "notifychannel",

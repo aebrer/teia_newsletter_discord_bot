@@ -253,7 +253,59 @@ export async function NotifierCreate(_user, _platform, _address, _tag = null){
         address: _address,
         struct: _struct,
     })
+    notifierAddresses.push(_notifier);
     await _notifier.save();
+}
+
+export function Notifiers(_user){
+    let _txt = "";
+    // Loop through all tracked addresses
+    notifierAddresses.forEach(_notifier => {
+        let _address = _notifier.address;
+        let _platforms = [];
+
+        // Loop through all platforms
+        for(const [_platform, _struct] of Object.entries(_notifier.struct)){
+            let _tracking = false;
+            let _tags = [];
+
+            _txt += _platform + ":\n";
+
+            // Loop through all people tracking
+            _struct.users.forEach(e => {
+                if(!_tracking && _user === e.user){
+                    _platforms.push(_platform)
+                    _tracking = true; 
+                }
+            });
+
+            // If not tracking, loop through all tags
+            if(!_tracking){
+                _struct.tags.forEach(_tag => {
+                    // Loop through all people tracking the current tag
+                    _tag.users.forEach(e => {
+                        if(_user === e.user){
+                            if(!_tracking) _platforms.push(_platform)
+                            _tags.push(_tag.tag);
+                            _tracking = true;
+                        }
+                    })
+                })
+            }
+
+            _txt += "`" + _address + "`";
+            if(_tags.length > 0){
+                _txt += "(tags:";
+                _tags.forEach((e, i) => {
+                    if(i > 0) _txt += ",";
+                    _txt += " " + e;
+                });
+                _txt += ")";
+            }
+            _txt += "\n";
+        }
+    });
+    return _txt;
 }
 
 export async function SetNotifierChannel(_guild, _channel){

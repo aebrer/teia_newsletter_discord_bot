@@ -262,7 +262,6 @@ export function Notifiers(_user){
     // Loop through all tracked addresses
     notifierAddresses.forEach(_notifier => {
         let _address = _notifier.address;
-        let _platforms = [];
 
         // Loop through all platforms
         for(const [_platform, _struct] of Object.entries(_notifier.struct)){
@@ -274,7 +273,6 @@ export function Notifiers(_user){
             // Loop through all people tracking
             _struct.users.forEach(e => {
                 if(!_tracking && _user === e.user){
-                    _platforms.push(_platform)
                     _tracking = true; 
                 }
             });
@@ -285,7 +283,6 @@ export function Notifiers(_user){
                     // Loop through all people tracking the current tag
                     _tag.users.forEach(e => {
                         if(_user === e.user){
-                            if(!_tracking) _platforms.push(_platform)
                             _tags.push(_tag.tag);
                             _tracking = true;
                         }
@@ -293,16 +290,18 @@ export function Notifiers(_user){
                 })
             }
 
-            _txt += "`" + _address + "`";
-            if(_tags.length > 0){
-                _txt += "(tags:";
-                _tags.forEach((e, i) => {
-                    if(i > 0) _txt += ",";
-                    _txt += " " + e;
-                });
-                _txt += ")";
+            if(_tracking){
+                _txt += "`" + _address + "`";
+                if(_tags.length > 0){
+                    _txt += "(tags:";
+                    _tags.forEach((e, i) => {
+                        if(i > 0) _txt += ",";
+                        _txt += " " + e;
+                    });
+                    _txt += ")";
+                }
+                _txt += "\n";
             }
-            _txt += "\n";
         }
     });
     return _txt;

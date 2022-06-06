@@ -359,7 +359,7 @@ async function NotifyDrop(_struct, _drop){
                 _servers.push(_server);
                 _users.push([_user]);
             }else{
-                _users[_serverIndex].push(__user);
+                _users[_serverIndex].push(_user);
             }
         }
     }

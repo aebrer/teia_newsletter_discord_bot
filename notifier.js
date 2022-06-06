@@ -42,7 +42,7 @@ export async function NotifierCheck(){
         if(_current.struct.teia.users.length > 0 || _current.struct.teia.tags.length > 0){
             console.log("checking: teia")
             let _responseTeia = await TeiaGraphQL(_current.address);
-            if(_responseTeia){
+            if(_responseTeia !== false && _responseTeia.data){
                 let _tokenTeia = _responseTeia.data.hic_et_nunc_token[0];
                 var _timestampTeia = Date.parse(_tokenTeia.timestamp);
                 if(_timestampTeia > Date.parse(_current.struct.teia.timestamp)){
@@ -72,7 +72,7 @@ export async function NotifierCheck(){
         if(_current.struct.fxhash.users.length > 0 || _current.struct.fxhash.tags.length > 0){
             console.log("checking: fxhash")
             let _responseFxhash = await FxhashGraphQL(_current.address);
-            if(_responseFxhash){
+            if(_responseFxhash !== false && _responseFxhash.data){
                 let _tokenFxhash = _responseFxhash.data.user.generativeTokens[0];
                 var _timestampFxhash = Date.parse(_tokenFxhash.createdAt);
                 if(_timestampFxhash > Date.parse(_current.struct.fxhash.timestamp)){

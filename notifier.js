@@ -382,7 +382,7 @@ async function NotifyMessage(_channelId, _users, _drop){
 
     let _embed = new MessageEmbed()
         .setTitle(_drop.name)
-        .setURL(_drop.platformUrl + _drop.platform)
+        .setURL(_drop.platformUrl + _drop.id)
         .setAuthor({ name: _drop.artist, url: _drop.artistUrl})
         .setImage(_drop.thumbnail)
         .setTimestamp(_drop.timestamp)

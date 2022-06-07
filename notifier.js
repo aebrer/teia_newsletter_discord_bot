@@ -385,7 +385,7 @@ async function NotifyMessage(_serverId, _channelId, _users, _drop){
         .setURL(_drop.platformUrl + _drop.id)
         .setAuthor({ name: _drop.artist, url: _drop.artistUrl})
         .setImage(_drop.thumbnail)
-        .setTimestamp(_drop.timestamp)
+        .setTimestamp(_drop.timestamp);
 
     let _messageText = "A new " + _drop.platform + " piece from " + _drop.artist + " just dropped!\n";
     // Ping all the users

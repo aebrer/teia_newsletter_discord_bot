@@ -392,14 +392,12 @@ async function NotifyMessage(_serverId, _channelId, _users, _drop){
     for(var i=0; i<_users.length; i++){
         _messageText += _users[i];
     }
-    let _guild = await client.guilds.fetch(_serverId);
-    if(_guild.available){
-        let _channel = await _guild.channels.fetch(_channelId);
-        _channel.send({
-            content: _messageText,
-            embeds: [_embed]
-        })
-    }
+    
+    let _channel = await client.channels.fetch(_channelId);
+    _channel.send({
+        content: _messageText,
+        embeds: [_embed]
+    })
 }
 
 async function NotifyMessageOld(_channelId, _users, _drop){

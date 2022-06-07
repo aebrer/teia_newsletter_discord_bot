@@ -351,7 +351,7 @@ async function NotifyDrop(_struct, _drop){
             let _serverIndex = -1;
             for(var j=0; j<_servers.length; j++){
                 if(_servers[j] === _server){
-                    _serverIndex = i;
+                    _serverIndex = j;
                     break;
                 }
             }

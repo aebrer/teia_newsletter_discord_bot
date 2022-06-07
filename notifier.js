@@ -55,7 +55,7 @@ export async function NotifierCheck(){
                         name: _tokenTeia.title,
                         artist: _tokenTeia.creator.name,
                         artistUrl: "https://teia.art/tz/" + _current.address,
-                        thumbnail: "https://ipfs.teia.art/" + _tokenTeia.display_uri.replace("://", "/"),
+                        thumbnail: "https://gateway.fxhash2.xyz/" + _tokenTeia.display_uri.replace("://", "/"),
                         timestamp: _timestampTeia
                     });
                     // Update the timestamp

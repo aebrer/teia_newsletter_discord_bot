@@ -368,17 +368,17 @@ async function NotifyDrop(_struct, _drop){
     for(var i=0; i<_servers.length; i++){
         let _serverDatas = await ServerList.find({id: _servers[i]})
         if(_serverDatas.length > 0){
-            NotifyMessage(_serverDatas[0].channel, _users[i], _drop);
+            NotifyMessage(_servers[i], _serverDatas[0].channel, _users[i], _drop);
         }
     }
 
     // Send messages to specified channels (typically these are role notifications)
     for(var i=0; i<_other.length; i++){
-        NotifyMessage(_other[i].channel, [_other[i].user], _drop);
+        NotifyMessage(_other[i].server, _other[i].channel, [_other[i].user], _drop);
     }
 }
 
-async function NotifyMessage(_channelId, _users, _drop){
+async function NotifyMessage(_serverId, _channelId, _users, _drop){
 
     let _embed = new MessageEmbed()
         .setTitle(_drop.name)
@@ -392,11 +392,14 @@ async function NotifyMessage(_channelId, _users, _drop){
     for(var i=0; i<_users.length; i++){
         _messageText += _users[i];
     }
-    let _channel = await client.channels.fetch(_channelId);
-    _channel.send({
-        content: _messageText,
-        embeds: [_embed]
-    })
+    let _guild = await client.guilds.fetch(_serverId);
+    if(_guild.available){
+        let _channel = await _guild.channels.fetch(_channelId);
+        _channel.send({
+            content: _messageText,
+            embeds: [_embed]
+        })
+    }
 }
 
 async function NotifyMessageOld(_channelId, _users, _drop){
